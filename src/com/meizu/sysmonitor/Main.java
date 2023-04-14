@@ -9,7 +9,7 @@ public class Main {
         String infile, outfile;
         infile = args[0];
         if (args.length<2) {
-            outfile = infile + ".xlog";
+            outfile = infile + ".log";
         }else {
             outfile = args[1];
         }

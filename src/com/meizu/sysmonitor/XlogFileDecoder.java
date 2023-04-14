@@ -3,6 +3,8 @@ package com.meizu.sysmonitor;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 class RetData{
     int startpos;
@@ -98,7 +100,7 @@ public class XlogFileDecoder {
         return  -1;
     }
 
-    private static RetData DecodeBuffer(byte[] _buffer, int _offset, int lastseq, StringBuffer _outbuffer){
+    private static RetData DecodeBuffer(byte[] _buffer, int _offset, int lastseq, ByteArrayOutputStream _outputStream) throws IOException {
         RetData retData = new RetData(_offset, lastseq);
         if (_offset >= _buffer.length) return new RetData(-1, lastseq);
 
@@ -110,7 +112,7 @@ public class XlogFileDecoder {
             if (-1 == fixpos){
                 return new RetData(-1, lastseq);
             } else {
-                _outbuffer.append(String.format("[F]decode_log_file.py decode error len=%d, result:%s \n", fixpos, ret));
+                _outputStream.write(String.format("[F]decode_log_file.py decode error len=%d, result:%s \n", fixpos, ret).getBytes());
                 _offset += fixpos;
             }
         }
@@ -126,7 +128,7 @@ public class XlogFileDecoder {
                 MAGIC_COMPRESS_NO_CRYPT_START==magic_start){
             crypt_key_len = 64;
         } else {
-            _outbuffer.append("in DecodeBuffer _buffer[%d]:%d != MAGIC_NUM_START", _offset, magic_start);
+            _outputStream.write(String.format("in DecodeBuffer _buffer[%d]:%d != MAGIC_NUM_START", _offset, magic_start).getBytes());
             return new RetData(-1, lastseq);
         }
 
@@ -140,7 +142,7 @@ public class XlogFileDecoder {
         char end_hour = (char)ByteBuffer.wrap(_buffer, _offset+headerLen-4-crypt_key_len-1, 1).order(ByteOrder.LITTLE_ENDIAN).get();
 
         if (seq != 0 && seq != 1 && lastseq != 0 && seq != (lastseq+1)){
-            _outbuffer.append(String.format("[F]decode_log_file.py log seq:%d-%d is missing\n",lastseq+1, seq-1));
+            _outputStream.write(String.format("[F]decode_log_file.py log seq:%d-%d is missing\n",lastseq+1, seq-1).getBytes());
         }
 
         if (seq != 0){
@@ -180,12 +182,12 @@ public class XlogFileDecoder {
             }
         }catch (Exception e){
             e.printStackTrace();
-            _outbuffer.append(String.format("[F]decode_log_file.py decompress err, %s\n", e.toString()));
+            _outputStream.write(String.format("[F]decode_log_file.py decompress err, %s\n", e.toString()).getBytes());
             retData.startpos = _offset + headerLen + length + 1;
             return retData;
         }
 
-        _outbuffer.append(new String(tmpbuffer));
+        _outputStream.write(tmpbuffer);
 
         retData.startpos = _offset + headerLen + length + 1;
         return retData;
@@ -213,22 +215,18 @@ public class XlogFileDecoder {
                 return;
             }
 
-            StringBuffer outbuffer = new StringBuffer();
-
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             RetData retData = new RetData(startpos, 0);
             while (true){
                 System.out.println(retData.startpos+":"+retData.lastseq);
-                retData = DecodeBuffer(_buffer, retData.startpos, retData.lastseq, outbuffer);
+                retData = DecodeBuffer(_buffer, retData.startpos, retData.lastseq, outputStream);
                 if (-1 == retData.startpos) break;
             }
+            byte[] result = outputStream.toByteArray();
 
-            if (0 == outbuffer.length()) return;
+            if (0 == result.length) return;
 
-            os = new FileOutputStream(_outfile);
-            writer = new OutputStreamWriter(os);
-            bw = new BufferedWriter(writer);
-            bw.write(outbuffer.toString());
-            bw.flush();
+            Files.write(Paths.get(_outfile), result);
         } catch (IOException e) {
             e.printStackTrace();
         }
