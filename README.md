@@ -4,7 +4,13 @@
 # Build Artifacts
 ```sh
 zip -d XlogDecoder.jar 'META-INF/.SF' 'META-INF/.RSA' 'META-INF/*SF' 'META-INF/*DSA'
-java -jar /path/to/XlogDecoder.jar /path/to/x.xlog
+```
+
+# Usage
+```sh
+java -jar XlogDecoder.jar [PRIV_KEY] [infile]
+# or
+java -jar XlogDecoder.jar [PRIV_KEY] [infile] [outfile]
 ```
 
 ### 友情链接

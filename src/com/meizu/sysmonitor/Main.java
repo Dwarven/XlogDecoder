@@ -2,17 +2,18 @@ package com.meizu.sysmonitor;
 
 public class Main {
     public static void main(String[] args) {
-        if (args.length < 1){
-            System.out.println("Usage: java -jar XlogDecoder.jar [infile] [outfile]");
+        if (args.length < 2){
+            System.out.println("Usage:\n java -jar XlogDecoder.jar [PRIV_KEY] [infile]\nor:\n java -jar XlogDecoder.jar [PRIV_KEY] [infile] [outfile]");
             return;
         }
-        String infile, outfile;
-        infile = args[0];
-        if (args.length<2) {
+        String priv_key, infile, outfile;
+        priv_key = args[0];
+        infile = args[1];
+        if (args.length<3) {
             outfile = infile + ".log";
         }else {
-            outfile = args[1];
+            outfile = args[2];
         }
-        XlogFileDecoder.ParseFile(infile, outfile);
+        XlogFileDecoder.ParseFile(priv_key, infile, outfile);
     }
 }

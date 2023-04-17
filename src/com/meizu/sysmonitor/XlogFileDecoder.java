@@ -27,11 +27,6 @@ public class XlogFileDecoder {
 
     public static byte MAGIC_END = 0x00;
 
-    public static String PRIV_KEY = "145aa7717bf9745b91e9569b80bbf1eedaa6cc6cd0e26317d810e35710f44cf8";
-    public static String PUB_KEY = "572d1e2710ae5fbca54c76a382fdd44050b3a675cb2bf39feebe85ef63d947aff0fa4943f1112e8b6af34bebebbaefa1a0aae055d9259b89a1858f7cc9af9df1";
-
-    public static byte[] BYTE_PRIV_KEY = CommonUtils.hexStringToBytes(PRIV_KEY);
-
     static {
         ECDHUtils.init();
     }
@@ -100,7 +95,7 @@ public class XlogFileDecoder {
         return  -1;
     }
 
-    private static RetData DecodeBuffer(byte[] _buffer, int _offset, int lastseq, ByteArrayOutputStream _outputStream) throws IOException {
+    private static RetData DecodeBuffer(byte[] _priv_key, byte[] _buffer, int _offset, int lastseq, ByteArrayOutputStream _outputStream) throws IOException {
         RetData retData = new RetData(_offset, lastseq);
         if (_offset >= _buffer.length) return new RetData(-1, lastseq);
 
@@ -166,7 +161,7 @@ public class XlogFileDecoder {
                 String pubkey = String.format("04%s%s", pubkey_x, pubkey_y);
 
 
-                byte[] tea_key = ECDHUtils.GetECDHKey(CommonUtils.hexStringToByteArray(pubkey), BYTE_PRIV_KEY);
+                byte[] tea_key = ECDHUtils.GetECDHKey(CommonUtils.hexStringToByteArray(pubkey), _priv_key);
 
                 tmpbuffer = CommonUtils.tea_decrypt(tmpbuffer, tea_key);
 
@@ -193,7 +188,7 @@ public class XlogFileDecoder {
         return retData;
     }
 
-    public static void ParseFile(String _file, String _outfile){
+    public static void ParseFile(String _priv_key, String _file, String _outfile){
         FileInputStream fis = null;
         DataInputStream dis = null;
 
@@ -215,11 +210,11 @@ public class XlogFileDecoder {
                 return;
             }
 
+            byte[] priv_key = CommonUtils.hexStringToBytes(_priv_key);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             RetData retData = new RetData(startpos, 0);
             while (true){
-                System.out.println(retData.startpos+":"+retData.lastseq);
-                retData = DecodeBuffer(_buffer, retData.startpos, retData.lastseq, outputStream);
+                retData = DecodeBuffer(priv_key, _buffer, retData.startpos, retData.lastseq, outputStream);
                 if (-1 == retData.startpos) break;
             }
             byte[] result = outputStream.toByteArray();
