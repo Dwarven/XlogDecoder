@@ -1,4 +1,4 @@
-package com.meizu.sysmonitor;
+package com.mars;
 
 public class Main {
     public static void main(String[] args) {

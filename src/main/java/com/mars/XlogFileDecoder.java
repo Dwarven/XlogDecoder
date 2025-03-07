@@ -1,4 +1,4 @@
-package com.meizu.sysmonitor;
+package com.mars;
 
 import java.io.*;
 import java.nio.ByteBuffer;
